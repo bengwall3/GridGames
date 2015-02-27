@@ -10,10 +10,11 @@
 				return Math.floor((Math.random() * b) + a);
 			}
 			
-			function Board(size)
+			function Board(size, id)
 			{
 				this.cells = new Array();
 				this.size = size;
+				this.id = id;
 				
 				this.populate = function()
 				{
@@ -116,7 +117,7 @@
 				{
 					var output = "";
 					
-					output += "<table id = \"board\">"
+					output += "<table id = " + this.id + ">";
 					
 					for(var i = 0; i < this.size[1]; i++)
 					{
@@ -176,47 +177,41 @@
 					return count;
 				}
 				
+				this.mapRow = function(row)
+				{
+					var out = "";
+					for(var i = 0; i < row.length; i++)
+					{
+						out += row[i].getNumber().toString() + " ";
+					}
+					
+					return out;
+				}
+				
 				this.clumps = function(xIndex, yIndex)
 				{
-					var x = xIndex;
-					var row = this.cells[yIndex];
-					var r = 0;
-					var l = 0;
-					var n = 1;
-					var broke = false;
+					var x = parseInt(xIndex);
+					var cellRow = this.cells[yIndex];
+					var row = [];
 					
-					if(row[x].getNumber() == 0)
-					{
-						return 0;
+					for(var i = 0; i < cellRow.length; i++)
+					{	
+						row.push(cellRow[i].getNumber());
 					}
 					
-					while(!broke)
-					{
-						alert(row);
-						if(row[x + n].getNumber() == 0 || row[x - n].getNumber() == 0)
-						{
-							broke = true;
-						}
-						
-						if(row[x + n].getNumber() != 0)
-						{
-							r++;
-						}
-						
-						if(row[x - n].getNumber() != 0)
-						{
-							l++;
-						}
-						
-						if(!broke)
-						{
-							n++;
-						}
-					}
+					var left = row.slice(0, x);
+					var right = row.slice(x+1);
+					var rightIndex = right.indexOf(0);
+					var leftIndex = x - left.reverse().indexOf(0);
 					
-					return r + l + 1;
+					alert(rightIndex - leftIndex);
+					alert(leftIndex);
+					alert(rightIndex);
+					
+					
 				}
 			}
+			
 			
 			function Cell(number)
 			{
@@ -242,7 +237,7 @@
 				}
 			}
 			
-			var b = new Board(SIZE);
+			var b = new Board(SIZE, "board");
 			
 			function doThese()
 			{
@@ -253,6 +248,7 @@
 			function doThat()
 			{
 				b.gravitate();
+				b.render("boardArea");
 			}
 			
 			function getCellNumber2(x, y, board)
@@ -262,7 +258,7 @@
 			
 			function testClumps(x, y)
 			{	
-				alert(b.clumps(x, y));
+				b.clumps(x, y);
 			}
 
 		</script>
