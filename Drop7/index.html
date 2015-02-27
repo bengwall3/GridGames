@@ -126,7 +126,7 @@
 				{
 					var output = "";
 					
-					output += "<table id = " + this.id + ">";
+					output += "<table id = \"" + this.id + "\">";
 					
 					for(var i = 0; i < this.size[1]; i++)
 					{
@@ -460,8 +460,6 @@
 					
 					output += "</div>";
 					
-					alert(output);
-					
 					return output;
 				}
 				
@@ -483,15 +481,15 @@
 				
 			}
 			
-			var b = new Board(SIZE, "board");
-			var t = new Board([7, 1], "tray");
-			var r = new RoundCounter(24, 4, 4, "roundCounter");
-
 			function setCurrentPosition(x, y)
 			{
 				hx = x;
 				hy = y;
 			}
+			
+			var b = new Board(SIZE, "board");
+			var t = new Board([7, 1], "tray");
+			var r = new RoundCounter(24, 4, 4, "roundCounter");
 
 			var counter = 0;
 			var started = false;
