@@ -1,0 +1,297 @@
+<html>
+	<head>
+		<script type = "text/javascript">
+			var SIZE = [64,64];
+			
+			var hx = 0; //currently hovered cell
+			var hy = 0;
+			
+			var cx = "null";
+			var cy = "null";
+			
+			function randint(a, b) //not inclusive on b
+			{
+				return Math.floor((Math.random() * b) + a);
+			}
+			
+			function randBool()
+			{
+				return (1 != randint(0, 2));
+			}
+			
+			function Board(size, id)
+			{
+				this.cells = new Array();
+				this.size = size;
+				this.id = id;
+				
+				this.populate = function()
+				{
+					for(var i = 0; i < this.size[1]; i++) //y dimension
+						{
+							var temp = new Array(); //create a row
+							
+							for(var j = 0; j < this.size[0]; j++) //x dimension
+							{
+								c = new Cell(j, i, randBool());
+								temp.push(c);
+							}
+							
+							this.cells.push(temp);
+						}
+				}
+				
+				this.getCell = function(x, y)
+				{
+					return this.cells[y][x];
+				}
+				
+				this.setCell = function(x, y, c)
+				{
+					this.cells[y][x] = c;
+				}
+				
+				this.toggleCell = function(x, y)
+				{
+					this.cells[y][x].toggleState();
+				}
+				
+				this.generateHTML = function()
+				{
+					var output = "";
+					
+					output += "<table id = \"" + this.id + "\">";
+					
+					for(var i = 0; i < this.size[1]; i++)
+					{
+						output += "<tr>";
+						
+						for(var j = 0; j < this.size[0]; j++)
+						{
+						
+							output += "<td"
+
+							output += ">" + this.getCell(j, i).generateHTML() + "</td>";
+						}
+						
+						output += "</tr>";
+					}
+					
+					output += "</table>"
+					return output;
+				}
+				
+				this.render = function(divID)
+				{
+					var x = document.getElementById(divID);
+					x.innerHTML = this.generateHTML();
+				}
+				
+				this.update = function()
+				{
+					for(var y = 0; y < this.size[1]; y++)
+					{
+						for(var x = 0; x < this.size[0]; x++)
+						{
+							var n = this.getLivingNeighbors(x, y);
+			
+							if(this.getCell(x, y).getState())
+							{
+								if(n < 2 || n > 3)
+								{
+									this.toggleCell(x, y);
+								}
+							}
+							
+							else
+							{
+								if(n == 3)
+								{
+									this.toggleCell(x, y);
+								}
+							}
+						}
+					}
+				}
+				
+				this.getLivingNeighbors = function(x, y)
+				{	
+					var n = 0;
+					
+					if(x + 1 < this.size[0])
+					{
+						if(this.getCell(x + 1, y).getState())
+						{
+							n++;
+						}
+					}
+					
+					if(x - 1 >= 0)
+					{
+						if(this.getCell(x - 1, y).getState())
+						{
+							n++;
+						}
+					}
+					
+					if(y + 1 < this.size[1])
+					{
+						if(this.getCell(x, y + 1).getState())
+						{
+							n++;
+						}
+					}
+					
+					if(y - 1 >= 0)
+					{
+						if(this.getCell(x, y - 1).getState())
+						{
+							n++;
+						}
+					}
+
+					return n;
+				}
+			}
+			
+			function Cell(x, y, state)
+			{
+				this.x = x;
+				this.y = y;
+				this.state = state;
+				
+				this.generateHTML = function()
+				{
+					var output = "<div ";
+					
+					if(this.state)
+					{
+						output += "class = \"cell on\"";
+					}
+					
+					else
+					{
+						output += "class = \"cell off\"";
+					}
+					
+					//output += "id = \"" + this.x.toString() + this.y.toString() + "\" ";
+					output += "onmouseover = \"setHoverPosition(" + x.toString() + ", " + y.toString() + ")\" ";
+					output += "onmouseup = \"setClickPosition(" + x.toString() + ", " + y.toString() + ")\"";
+					
+					output += "></div>";
+			
+					return output;
+				}
+				
+				this.getPosition = function()
+				{
+					return [this.x, this.y];
+				}
+				
+				this.setPosition = function(someX, someY)
+				{
+					this.x = someX;
+					this.y = someY;
+				}
+				
+				this.getState = function()
+				{
+					return self.state;
+				}
+				
+				this.toggleState = function()
+				{
+					this.state = !this.state;
+				}
+				
+				this.setState = function(b)
+				{
+					this.state = b;
+				}
+			}
+			
+			function setClickPosition(x, y)
+			{
+				cx = x;
+				cy = y;
+			}
+			
+			var started = false;
+			var b = new Board(SIZE, "board");
+			
+			function mainLoop()
+			{
+				if(!started)
+				{
+					b.populate();
+					started = true;
+				}
+				
+				if(cx != "null")
+				{
+					b.getCell(cx, cy).toggleState();
+					cx = "null";
+					cy = "null";
+				}
+				
+				//b.update();
+				b.render("boardArea");
+			}
+			
+			var m = setInterval(function(){mainLoop()}, 1000);
+			
+			function stop()
+			{
+				clearInterval(m);
+			}
+			
+			function setHoverPosition(x, y)
+			{
+				hx = x;
+				hy = y;
+			}
+		</script>
+		
+		<style type = "text/css">
+			.cell
+			{
+				height: 8px;
+				width: 8px;
+			}
+			
+			.on
+			{
+				background-color: black;
+			}
+			
+			.off
+			{
+				background-color: white;
+			}
+			
+			#board
+			{
+				border-spacing: 0;
+				margin: 0 auto;
+				border: 8px solid dimgray;
+			}
+			
+			#board td
+			{	
+				padding: 0;
+			}
+	
+			body
+			{
+				background-color: gray;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id = "container">
+			<div id = "boardArea"></div>
+			<input type = "textarea" value = "" id = "t" style = "margin: 0 auto;" />
+		</div>
+	</body>
+</html>
