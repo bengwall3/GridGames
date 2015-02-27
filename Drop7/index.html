@@ -1,5 +1,7 @@
 <html>
 	<head>
+		<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Oswald' rel='stylesheet' type='text/css'>
+		
 		<script type = "text/javascript">
 		
 			var SIZE = [7, 7];
@@ -419,15 +421,15 @@
 				}
 			}
 			
-			function RoundCounter(max, dec, min, size, id)
+			function RoundCounter(start, perRound, min, id)
 			{
-				this.max = max;
-				this.dec = dec;
+				this.start = start;
+				this.drops = start;
+				this.perRound = perRound;
 				this.min = min;
-				this.size = size;
-				this.level = 1;
-				this.current = max;
+				this.round = 1;
 				this.id = id;
+				this.max = start;
 				
 				this.render = function(divID)
 				{
@@ -441,11 +443,11 @@
 					
 					//one container  div, level info paragraph, many little dot divs
 					output += "<div id = \"" + this.id + "\">";
-					//output += "Level " + this.level;
+					//output += "Level " + this.round;
 					
 					for(var i = 0; i < this.max; i++)
 					{
-						if(i >= this.current)
+						if(i >= this.drops)
 						{
 							output += "<div class = \"dot gray\"></div>";
 						}
@@ -458,29 +460,32 @@
 					
 					output += "</div>";
 					
+					alert(output);
+					
 					return output;
 				}
 				
 				this.levelUp = function()
 				{	
-					this.level++;
-					this.current = Math.max(this.min, this.current - this.dec);
-					this.max = this.current;
+					this.round++;
+					this.max = Math.max(this.min, (this.start - (this.round - 1) * this.perRound));
+					this.drops = this.max;
 				}
 				
 				this.dropOne = function()
 				{
-					this.current -= 1;
-					if(this.current == 0)
+					this.drops -= 1;
+					if(this.drops == 0)
 					{
 						this.levelUp();
 					}
 				}
 				
 			}
+			
 			var b = new Board(SIZE, "board");
 			var t = new Board([7, 1], "tray");
-			var r = new RoundCounter(24, 4, 4, 4, "roundCounter");
+			var r = new RoundCounter(24, 4, 4, "roundCounter");
 
 			function setCurrentPosition(x, y)
 			{
@@ -505,7 +510,7 @@
 				t.render("trayArea");
 				r.render("roundArea");
 				
-				if(counter % 25 == 0)
+				if(counter % 15 == 0)
 				{
 					b.gravitate();
 					setTimeout(function(){b.breaks()},1000);
@@ -532,10 +537,10 @@
 				vertical-align: middle;
 				border: 1px solid black;
 				color: white;
-				text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+				text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 				font-size: 20px;
 				font-weight: bold;
-				font-family: Cursive;
+				font-family: 'Oswald', sans-serif;
 				user-select: none;
 			}
 			
@@ -583,6 +588,8 @@
 				color: lightgray;
 				background-color: lightgray;
 				text-shadow: none;
+				border: -2px solid dimgray;
+				border-radius: 50%;
 			}
 			
 			#board
@@ -619,7 +626,7 @@
 			body
 			{
 				background-color: black;
-				transform: scale(1.75);
+				border: 10px solid gray;
 			}
 			
 			.dot
@@ -628,7 +635,7 @@
 				width: 5px;
 				border-radius: 50%;
 				background-color: white;
-				margin: 2.7px;
+				margin: 2px;
 				position: relative;
 				float: left;
 			}
@@ -659,7 +666,7 @@
 			
 			#container
 			{
-				margin: 0 auto;
+				margin: 25% auto;
 				width: 332px;
 				height: 332px;
 				border: 4px dotted black;
@@ -676,13 +683,10 @@
 				height: 25px;
 				position: absolute;
 				color: white;
-				text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
-				font-family: Cursive;
-				font-weight: bold;
+				font-family: 'Open Sans Condensed', sans-serif;
 				font-size: 20px;
 			}
-			
-			
+
 		</style>
 	</head>
 	
@@ -691,7 +695,7 @@
 			<div id = "trayArea"></div>
 			<div id = "boardArea"></div>
 			<div id = "roundArea"></div>
-			<div id = "levelArea">Level 1</div>
+			<div id = "levelArea">45,324</div>
 		</div>
 		<input type = "button" value = "stop" onclick = "stop()"/>
 	</body>
