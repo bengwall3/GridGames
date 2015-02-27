@@ -18,7 +18,7 @@
 			{
 				return a[randint(0, a.length)];
 			}
-			
+	
 			function Board(size, id)
 			{
 				this.cells = new Array();
@@ -134,7 +134,15 @@
 						
 						for(var j = 0; j < this.size[0]; j++)
 						{
-							output += "<td>" + this.getCell(j, i).generateHTML() + "</td>";
+						
+							output += "<td"
+							
+							if(j == hx)
+							{
+								output += " class = \"hovered\"";
+							}
+							
+							output += ">" + this.getCell(j, i).generateHTML() + "</td>";
 						}
 						
 						output += "</tr>";
@@ -303,13 +311,94 @@
 					
 					for(var i = 0; i < bList.length; i++)
 					{
-						this.deleteCell(bList[i][0], bList[i][1]);
+						if(this.getCell(bList[i][0], bList[i][1]).getType() == "normal")
+						{
+							this.deleteCell(bList[i][0], bList[i][1]);
+						}
+						
+						/*var rocks = this.lookAroundForRock(bList[i][0], bList[i][1]);
+						
+						for(var j = 0; j < rocks.length; j++)
+						{
+							this.getCell(rocks[j][0], rocks[j][1]).takeHit();
+						} */
 					}
-					
-					
 				}
 				
+				/*this.lookAroundForRock = function(x, y)
+				{
+					var out = new Array();
+					
+					if(x + 1 < this.size[0])
+					{
+						if(this.cells[y][x + 1].getType() == "rock")
+						{
+							out.push([x + 1, y]);
+						}
+					}
+					
+					if(y + 1 < this.size[1])
+					{
+						if(this.cells[y + 1][x].getType() == "rock")
+						{
+							out.push([x, y + 1]);
+						}
+					}
+					
+					if(x - 1 >= 0)
+					{
+						if(this.cells[y][x - 1].getType() == "rock")
+						{
+							out.push([x - 1, y]);
+						}
+					}
+					
+					if(y - 1 >= 0)
+					{
+						if(this.cells[y - 1][x].getType() == "rock")
+						{
+							out.push([x, y - 1]);
+						}
+					}
+					
+					return out;
+				} */
 				
+				this.pushUp = function()
+				{	
+					if(this.topRowEmpty())
+					{
+						this.cells = this.cells.slice(1);
+						this.cells.push(this.makeStoneBottomRow());
+					}
+				}
+				
+				this.makeStoneBottomRow = function()
+				{	
+					var row = new Array();
+					
+					for(var x = 0; x < this.size[0]; x++)
+					{
+						var c = new Cell(randint(1, 7), this.size[1] - 1, x, "rock");
+						row.push(c);
+					}
+					
+					return row;
+				}
+				
+				this.topRowEmpty = function()
+				{
+					var row = this.cells[0];
+					for(var x = 0; x < row.length; x++)
+					{
+						if(row[x].getNumber() != 0)
+						{
+							return false;
+						}
+					}
+					
+					return true;
+				}
 				
 				/* TRAY FUNCTIONS TO BE MOVED TO INHERITED CLASS */
 				
@@ -355,10 +444,9 @@
 						roundCounter.dropOne();
 					}
 				}
-				
 			}
 			
-			
+
 			function Cell(number, x, y, type)
 			{
 				this.number = number;
@@ -370,7 +458,17 @@
 				this.y = y;
 				this.fading = false;
 				this.type = type;
-								
+				
+				if(this.type == "normal")
+				{
+					this.hits = 0;
+				}
+				
+				else if(this.type == "stone")
+				{
+					this.hits = 2;
+				}
+
 				this.setNumber = function(n)
 				{
 					this.number = n;
@@ -383,15 +481,21 @@
 				
 				this.generateHTML = function()
 				{
+					var output = "<div ";
+					
+					output += "class = \"cell " + this.words[this.number] + " " + this.type + " hits" + this.hits + " ";
+					
 					if(this.type == "normal")
 					{
-						return "<div class = \"cell " + this.words[this.number] + " " + this.type + "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
+						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
 					}
 					
 					else
 					{
-						return "<div class = \"cell " + this.words[this.number] + " " + this.type + "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
+						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
 					}
+					
+					return output;
 				}
 				
 				this.getPosition = function()
@@ -418,6 +522,21 @@
 				this.setType = function(t)
 				{
 					this.type = t;
+				}
+				
+				this.takeHit = function()
+				{
+					this.hits--;
+					
+					if(this.hits == 0)
+					{
+						this.type = "normal";
+					}
+				}
+				
+				this.getHits = function()
+				{	
+					return this.hits;
 				}
 			}
 			
@@ -478,7 +597,6 @@
 						this.levelUp();
 					}
 				}
-				
 			}
 			
 			function setCurrentPosition(x, y)
@@ -513,7 +631,6 @@
 					b.gravitate();
 					setTimeout(function(){b.breaks()},1000);
 				}
-
 			}
 			
 			var m = setInterval(function(){mainLoop()}, 50);
@@ -523,6 +640,10 @@
 				clearInterval(m);
 			}
 			
+			function push()
+			{
+				b.pushUp();
+			}
 		</script>
 		
 		<style type = "text/css">
@@ -539,7 +660,10 @@
 				font-size: 20px;
 				font-weight: bold;
 				font-family: 'Oswald', sans-serif;
-				user-select: none;
+				
+				-webkit-user-select: none; /* Chrome/Safari */        
+				-moz-user-select: none; /* Firefox */
+				-ms-user-select: none; /* IE10+ */
 			}
 			
 			.zero
@@ -548,46 +672,64 @@
 			}
 			.one
 			{
-				background-color: green;
+				background-color: green; /* #68bd45 */
 			}
 			
 			.two
 			{
-				background-color: yellow;
+				background-color: yellow; /* #d1c803 */
 			}
 			
 			.three
 			{
-				background-color: orange;
+				background-color: orange; /* #e98622 */
 			}
 			
 			.four
 			{
-				background-color: red;
+				background-color: red; /* #d22c22 */
 			}
 			
 			.five
 			{
-				background-color: pink;
+				background-color: pink; /* #b7499f */
 			}
 			
 			.six
 			{	
-				background-color: skyblue;
+				background-color: skyblue; /* #22bbef */
 			}
 			
 			.seven
 			{
-				background-color: blue;
+				background-color: blue; /* #4457a5 */
 			}
 			
+			
 			.rock
+			{
+				color: lightgray;
+				background-color: lightgray;
+				text-shadow: none;
+				border-radius: 50%;
+				border: 4px solid dimgray;
+				height: 24px;
+				width: 24px;
+				margin-left: 1px;
+			}
+			.rock hits1
 			{	
 				color: lightgray;
 				background-color: lightgray;
 				text-shadow: none;
-				border: -2px solid dimgray;
 				border-radius: 50%;
+			}
+			
+			.rock hits2
+			{
+				color: dimgray;
+				background-color: dimgray;
+				text-shadow: none;
 			}
 			
 			#board
@@ -610,6 +752,11 @@
 				background-color: black;
 			}
 			
+			#board td.hovered
+			{
+				background-color: #202020;
+			}
+			
 			#board tr
 			{
 				padding: 0;
@@ -618,7 +765,7 @@
 			#tray td
 			{
 				padding: 0;
-				border: 1px solid gray;
+				border: 1px solid dimgray;
 			}
 			
 			body
@@ -668,7 +815,7 @@
 				width: 332px;
 				height: 332px;
 				border: 4px dotted black;
-				background-color: gray;
+				background-color: dimgray;
 				padding-top: 20px;
 				border-radius: 10%;
 			}
@@ -688,13 +835,17 @@
 		</style>
 	</head>
 	
-	<body onmouseup = "t.tRelease(b, r)">
-		<div id = "container">
+	<body>
+		<div id = "container" onmouseup = "t.tRelease(b, r)">
 			<div id = "trayArea"></div>
 			<div id = "boardArea"></div>
 			<div id = "roundArea"></div>
 			<div id = "levelArea">45,324</div>
 		</div>
 		<input type = "button" value = "stop" onclick = "stop()"/>
+		<input type = "button" value = "push" onclick = "push()"/>
+		<input type = "textarea" value = "" id = "xIn" />
+		<input type = "textarea" value = "" id = "yIn" />
+		<input type = "button" value = "count" onclick = "count()"/>
 	</body>
 </html>
