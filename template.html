@@ -1,0 +1,103 @@
+<html>
+	<head>
+		<script type = "text/javascript">
+			var SIZE = [7, 7];
+			
+			var hx = 0; //currently hovered cell
+			var hy = 0;
+			
+			function Board(size, id)
+			{
+				this.cells = new Array();
+				this.size = size;
+				this.id = id;
+				
+				this.populate = function()
+				{
+				}
+				
+				this.getCell = function(x, y)
+				{
+					return this.cells[y][x];
+				}
+				
+				this.setCell = function(x, y, c)
+				{
+					this.cells[y][x] = c;
+				}
+				
+				this.generateHTML = function()
+				{
+					var output = "";
+					
+					output += "<table id = \"" + this.id + "\">";
+					
+					for(var i = 0; i < this.size[1]; i++)
+					{
+						output += "<tr>";
+						
+						for(var j = 0; j < this.size[0]; j++)
+						{
+						
+							output += "<td"
+
+							output += ">" + this.getCell(j, i).generateHTML() + "</td>";
+						}
+						
+						output += "</tr>";
+					}
+					
+					output += "</table>"
+					return output;
+				}
+				
+				this.render = function(divID)
+				{
+					var x = document.getElementById(divID);
+					x.innerHTML = this.generateHTML();
+				}
+			}
+			
+			function Cell(x, y)
+			{
+				this.x = x;
+				this.y = y;
+				
+				this.generateHTML = function()
+				{
+					var output = "<div ";
+					
+					output += "class = \"cell\"";
+					output += "id = \"" + this.x.toString() + this.y.toString() + "\" ";
+					output += "onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
+			
+					return output;
+				}
+				
+				this.getPosition = function()
+				{
+					return [this.x, this.y];
+				}
+				
+				this.setPosition = function(someX, someY)
+				{
+					this.x = someX;
+					this.y = someY;
+				}
+			}
+			
+			function setHoverPosition(x, y)
+			{
+				hx = x;
+				hy = y;
+			}
+		</script>
+		
+		<style type = "text/css">
+
+		</style>
+	</head>
+	
+	<body>
+	</body>
+</html>
