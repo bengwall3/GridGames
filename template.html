@@ -1,10 +1,13 @@
 <html>
 	<head>
 		<script type = "text/javascript">
-			var SIZE = [7, 7];
+			var SIZE = [5, 5];
 			
 			var hx = 0; //currently hovered cell
 			var hy = 0;
+			
+			var cx = 0;
+			var cy = 0;
 			
 			function Board(size, id)
 			{
@@ -14,6 +17,18 @@
 				
 				this.populate = function()
 				{
+					for(var i = 0; i < this.size[1]; i++) 
+						{
+							var temp = new Array(); 
+							
+							for(var j = 0; j < this.size[0]; j++) 
+							{
+								c = new Cell(j, i);
+								temp.push(c);
+							}
+							
+							this.cells.push(temp);
+						}
 				}
 				
 				this.getCell = function(x, y)
@@ -69,7 +84,7 @@
 					
 					output += "class = \"cell\"";
 					output += "id = \"" + this.x.toString() + this.y.toString() + "\" ";
-					output += "onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
+					output += "onmouseover = \"setHoverPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
 			
 					return output;
 				}
@@ -90,6 +105,30 @@
 			{
 				hx = x;
 				hy = y;
+			}
+			
+			function setClickPosition(x, y)
+			{
+				cx = x;
+				cy = y;	
+			}
+			
+			var tickMS = 50;
+			
+			function mainLoop()
+			{
+			}
+			
+			var m = setInterval(function(){mainLoop()}, tickMS);
+			
+			function stop()
+			{
+				clearInterval(m);
+			}
+			
+			function start()
+			{
+				m = setInterval(function(){mainLoop()}, tickMS);
 			}
 		</script>
 		
