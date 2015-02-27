@@ -7,12 +7,22 @@
 			var PLAYERS = 4;
 			var MAX = 10;
 			var MIN = 1;
+			var COLORS = ["black", "red", "blue", "orange", "green"];
 			
 			var hx = 0;
 			var hy = 0;
 			
 			var cx = "null";
 			var cy = "null";
+			
+			var lx = "null";
+			var ly = "null";
+			
+			var EVENTS = [];
+			
+			var turnDone = false;
+			
+			
 			
 			function randint(a, b)
 			{
@@ -221,7 +231,9 @@
 					{
 						for(var j = 0; i < this.size[0]; j++)
 						{
-							if(this.getCellOwner(j, i) == name)
+							var c = this.getCell(j, i);
+							
+							if(c.getOwner() == name)
 							{
 								count += 1;
 							}
@@ -428,50 +440,113 @@
 			var started = false;
 			var current = 1;
 			
+			var state = "notStarted";
+			
 			function mainLoop()
 			{
-				counter ++;
+				counter++;
 				
-				if(!started)
+				if(state == "notStarted")
 				{
 					b.populate();
-					started = true;
+					state = "pickCell";
+				}
+				
+				if(state == "pickCell")
+				{
+					var y = document.getElementById("container");
+					y.style.border = "8px solid " + COLORS[current];
+					
+					if(cx != "null")
+					{
+						if(b.getCellOwner(cx, cy) == 0)
+						{
+							var n = randint(MIN, MAX);
+							b.setCellNumber(cx, cy, n);
+							b.setCellOwner(cx, cy, current);
+							
+							lx = cx;
+							ly = cy;
+							
+							state = "claimCell";
+						}
+						
+						cx = "null";
+						cy = "null";
+					}
+				}
+				
+				if(state == "claimCell")
+				{	
+					if(turnDone)
+					{
+						turnDone = !turnDone;
+						current = Math.max((current + 1) % (PLAYERS + 1), 1);
+						
+						if(b.boardFull())
+						{
+							state = "gameOver";
+						}
+						
+						else
+						{
+							state = "pickCell";
+						}
+					}
+					
+					else
+					{
+						if(cx != "null")
+						{
+							if(isNextTo(lx, ly, cx, cy))
+							{
+								if(b.getCellOwner(cx, cy) != 0 && b.getCellOwner(cx, cy) != current)
+								{
+									if(b.getCellNumber(cx, cy) < b.getCellNumber(lx, ly))
+									{
+										b.setCellNumber(cx, cy, b.getCellNumber(lx, ly));
+										b.setCellOwner(cx, cy, current);
+										
+										lx = cx;
+										ly = cy;
+									}
+								}
+							}
+							
+							cx = "null";
+							cy = "null";
+						}
+					}
+				}
+			
+				if(state == "gameOver")
+				{
+					var out = "";
+					var max = 0;
+					var win = 0;
+					for(var i = 1; i < PLAYERS; i++)
+					{
+						var n = b.countPlayer(i);
+						
+						if(n > max)
+						{
+							win = i;
+							max = n;
+						}
+						
+						out += "Player " + i + ": " + b.countPlayer(i) + "\n";
+					}
+					
+					out += "\n";
+					
+					out += "Player " + win + " won!";
+					
+					alert(out);
+					
+					stop();
 				}
 				
 				b.render("boardArea");
-				
-				if(cx != "null")
-				{
-					var n = randint(MIN, MAX);
-					b.setCellNumber(cx, cy, n);
-					b.setCellOwner(cx, cy, current);
-					cx = "null";
-					cy = "null";
-					
-					var a = b.check(current);
-					
-					for(var i = 0; i < a.length; i++)
-					{
-						b.setCellOwner(a[i][0], a[i][1], current);
-						b.setCellNumber(a[i][0], a[i][1], n);
-					}
-					
-					a = b.check(current); //update
-					
-					if(a.length == 0)
-					{
-						current = Math.max((current + 1) % (PLAYERS + 1), 1);
-					}
-					v.value = b.countPlayer(1);
-				}
-				
-				/*if(counter % 25 == 0)
-				{
-					if(b.check(1).length > 0)
-					{
-						b.change(b.check(1));
-					}
-				}*/
 			}
 			
 			var m = setInterval(function(){mainLoop()}, 50);
@@ -486,6 +561,21 @@
 			{
 				hx = x;
 				hy = y;
+			}
+			
+			function isNextTo(a, b, x, y)
+			{
+				if((Math.abs(a - x) != 0 && Math.abs(b - y) == 0) || (Math.abs(a - x) == 0 && Math.abs(b - y) != 0))
+				{
+					return true;
+				}
+				
+				return false;
+			}
+			
+			function endTurn()
+			{
+				turnDone = !turnDone;
 			}
 		</script>
 		
@@ -503,11 +593,15 @@
 				text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
 				border: 1px solid white;
 				
+				-webkit-user-select: none; /* Chrome/Safari */        
+				-moz-user-select: none; /* Firefox */
+				-ms-user-select: none; /* IE10+ */
 			}
 			
 			.p0
 			{
 				background-color: black;
+				text-shadow: none;
 			}
 			
 			.p1
@@ -535,6 +629,7 @@
 				border: 2px solid black;
 				border-spacing: 0;
 				margin: 30px 30px 30px 30px;
+				position: absolute;
 			}
 			
 			#board td
@@ -542,6 +637,11 @@
 				border: 2px solid black;
 				padding: 0;
 				background-color: black;
+			}
+			
+			#board table
+			{
+				border: 3px solid red;
 			}
 			
 			#container
@@ -552,6 +652,7 @@
 				border: 8px solid darkgray;
 				background-color: dimgray;
 				border-radius: 10%;
+				padding-top: 15px;
 			}
 			
 			body
@@ -568,9 +669,12 @@
 		<br><hr>
 		<input type = "textarea" value = "" id = "xIn2" />
 		<input type = "textarea" value = "" id = "yIn2" />
+		
 		<div id = "container">
 			<div id = "boardArea"></div>
+			<input type = "button" value = "End Turn" onclick = "endTurn()" style = "border: 2px solid black; color: black; font-weight: bold; background-color: lightgray; border-radius: 4px; text-align: center; margin-left: 137px;"/>
 		</div>
+		
 		<input type = "textarea" value = "" id = "v" style = "overflow: auto;" />
 	</body>
 </html>
