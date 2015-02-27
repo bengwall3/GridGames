@@ -343,13 +343,14 @@
 					//alert("updated");
 				}
 				
-				this.tRelease = function(other)
+				this.tRelease = function(other, roundCounter)
 				{
 					if(other.canDrop(this.index))
 					{
 						other.setCellNumber(this.index, 0, this.number);
 						this.deleteCell(this.index, 0);
 						this.tPopulate();
+						roundCounter.dropOne();
 					}
 				}
 				
@@ -418,8 +419,70 @@
 				}
 			}
 			
+			function RoundCounter(max, dec, min, size, id)
+			{
+				this.max = max;
+				this.dec = dec;
+				this.min = min;
+				this.size = size;
+				this.level = 1;
+				this.current = max;
+				this.id = id;
+				
+				this.render = function(divID)
+				{
+					var x = document.getElementById(divID);
+					x.innerHTML = this.generateHTML();
+				}
+				
+				this.generateHTML = function()
+				{
+					var output = "";
+					
+					//one container  div, level info paragraph, many little dot divs
+					output += "<div id = \"" + this.id + "\">";
+					//output += "Level " + this.level;
+					
+					for(var i = 0; i < this.max; i++)
+					{
+						if(i >= this.current)
+						{
+							output += "<div class = \"dot gray\"></div>";
+						}
+						
+						else
+						{
+							output += "<div class = \"dot\"></div>";
+						}
+					}
+					
+					output += "</div>";
+					
+					alert(output);
+					
+					return output;
+				}
+				
+				this.levelUp = function()
+				{	
+					this.level++;
+					this.current = Math.max(this.min, this.current - this.dec);
+					this.max = this.current;
+				}
+				
+				this.dropOne = function()
+				{
+					this.current -= 1;
+					if(this.current == 0)
+					{
+						this.levelUp();
+					}
+				}
+				
+			}
 			var b = new Board(SIZE, "board");
 			var t = new Board([7, 1], "tray");
+			var r = new RoundCounter(24, 4, 4, 4, "roundCounter");
 
 			function setCurrentPosition(x, y)
 			{
@@ -431,7 +494,7 @@
 			var started = false;
 			
 			function mainLoop()
-			{
+			{	
 				if(!started)
 				{
 					b.populate();
@@ -442,6 +505,7 @@
 				b.render("boardArea");
 				t.tUpdate();
 				t.render("trayArea");
+				r.render("roundArea");
 				
 				if(counter % 25 == 0)
 				{
@@ -522,6 +586,8 @@
 				color: lightgray;
 				background-color: lightgray;
 				text-shadow: none;
+				border: -2px solid dimgray;
+				border-radius: 50%;
 			}
 			
 			table
@@ -546,13 +612,40 @@
 			{
 				background-color: black;
 			}
+			
+			.dot
+			{
+				height: 5px;
+				width: 5px;
+				border-radius: 50%;
+				background-color: white;
+				margin: 2.7px;
+				position: relative;
+				float: left;
+			}
+			
+			.gray
+			{
+				background-color: gray;
+			}
+			
+			#roundCounter
+			{
+				height: 10px;
+				width: 252px;
+				color: white;
+				margin: 0 auto;
+				position: relative;
+			}
 		</style>
 	</head>
 	
-	<body onmouseup = "t.tRelease(b)">
+	<body onmouseup = "t.tRelease(b, r)">
 		<input type = "button" value = "stop" onclick = "stop()" />
 		<div id = "trayArea"></div>
 		<br>
 		<div id = "boardArea"></div>
+		<br>
+		<div id = "roundArea"></div>
 	</body>
 </html>
