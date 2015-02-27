@@ -4,10 +4,17 @@
 		
 			var SIZE = [7, 7];
 			var MAX = 7;
+			var hx = 0; //currently hovered cell
+			var hy = 0;
 			
 			function randint(a, b)
 			{
 				return Math.floor((Math.random() * b) + a);
+			}
+			
+			function randomchoice(a)
+			{
+				return a[randint(0, a.length)];
 			}
 			
 			function Board(size, id)
@@ -24,14 +31,14 @@
 						
 						for(var j = 0; j < this.size[0]; j++) //x dimension
 						{
-							c = new Cell(randint(0, MAX));
+							c = new Cell(randint(0, MAX), j, i, "normal");
 							temp.push(c);
 						}
 						
 						this.cells.push(temp);
 					}
 				}
-				
+		
 				this.deleteCell = function(x, y)
 				{
 					this.cells[y][x].setNumber(0);
@@ -45,7 +52,7 @@
 				this.getCellNumber = function(x, y)
 				{
 					//alert(x + " " + y + " " + this.cells[y][x]);
-					return this.cells[y][x].getNumber();
+					return this.getCell().getNumber();
 				}
 				
 				this.setCellNumber = function(x, y, n)
@@ -195,8 +202,11 @@
 					var indices = new Array();
 					var minBelow = row.length;
 					var minAbove = row.length;
-					var c = new Cell(0);
-					row = [c].push(row).push(c);
+					
+					if(row[x].getNumber() == 0)
+					{
+						return 0;
+					}
 					
 					for(var i = 0; i < row.length; i++)
 					{
@@ -206,13 +216,16 @@
 						}
 					}
 					
+					indices.push(-1);
+					indices.push(row.length);
+					
 					for(var j = 0; j < indices.length; j++)
 					{
 						var current = indices[j];
 						
 						if(current > x)
 						{
-							if(current - x < minAbove)
+							if(current - x <= minAbove)
 							{
 								minAbove = current - x;
 							}
@@ -220,26 +233,140 @@
 						
 						if(current < x)
 						{
-							if(x - current < minBelow)
+							if(x - current <= minBelow)
 							{
 								minBelow = x - current;
 							}
 						}
 					}
 					
-					alert(minAbove + minBelow - 1);
+					return minBelow + minAbove + 1 - 2; //include x index, subtract the two 0 endpieces
+				}
+				
+				this.canDrop = function(x)
+				{
+					if(this.cells[0][x].getNumber() == 0)
+					{
+						return true;
+					}
+					
+					return false;
+				}
+				
+				this.anyFalling = function()
+				{
+					for(var y = 0; y < this.size[1] - 1; y++)
+					{
+						for(var x = 0; x < this.size[0]; x++)
+						{	
+							var c = this.getCell(x, y);
+							var other = this.getCell(x, y + 1);
+							
+							if(other.getNumber() == 0 && c.getNumber() != 0)
+							{
+								return true;
+							}
+						}
+					}
+					
+					return false;
+				} 
+				
+				this.breaks = function()
+				{	
+					var bList = new Array();
+					
+					if(!this.anyFalling())
+					{
+						for(var y = 0; y < this.size[1]; y++)
+						{
+							for(var x = 0; x < this.size[0]; x++)
+							{
+								var c = this.getCell(x, y);
+								var other = this.getCell(x, Math.min(this.size[1] - 1, y + 1));
+								
+								if(c.getNumber() == this.verts(x) || c.getNumber() == this.clumps(x, y))
+								{
+									if(other.getNumber() != 0)
+									{
+										var cList = new Array();
+										cList += x;
+										cList += y;
+										bList.push(cList);
+									}
+								}
+							}
+						}
+					}
+					
+					for(var i = 0; i < bList.length; i++)
+					{
+						this.deleteCell(bList[i][0], bList[i][1]);
+					}
+					
 					
 				}
+				
+				
+				
+				/* TRAY FUNCTIONS TO BE MOVED TO INHERITED CLASS */
+				
+				this.number = 0;
+				this.index = 0;
+				
+				this.tPopulate = function()
+				{
+					var temp = new Array();
+					
+					for(var x = 0; x < this.size[0]; x++)
+					{
+						c = new Cell(0, x, 0, "normal");
+						temp.push(c);
+					}
+					
+					this.cells.push(temp);
+					this.cells = [this.cells[0]]; //keeps it trimmed
+					this.index = Math.floor(this.size[0] / 2);
+					this.number = randint(1, MAX);
+					this.setCellNumber(this.index, 0, this.number);
+				}
+				
+				this.tUpdate = function()
+				{
+					var n = this.index;
+					if(n != hx)
+					{
+						this.index = hx;
+						this.setCellNumber(this.index, 0, this.number);
+						this.deleteCell(n, 0);
+					}
+					//alert("updated");
+				}
+				
+				this.tRelease = function(other)
+				{
+					if(other.canDrop(this.index))
+					{
+						other.setCellNumber(this.index, 0, this.number);
+						this.deleteCell(this.index, 0);
+						this.tPopulate();
+					}
+				}
+				
 			}
 			
 			
-			function Cell(number)
+			function Cell(number, x, y, type)
 			{
 				this.number = number;
 				this.words = ["zero", "one", "two",
 								"three", "four", "five",
 								"six", "seven", "eight",
-								"nine", "ten", "eleven"]
+								"nine", "ten", "eleven"];
+				this.x = x;
+				this.y = y;
+				this.fading = false;
+				this.type = type;
 								
 				this.setNumber = function(n)
 				{
@@ -253,34 +380,84 @@
 				
 				this.generateHTML = function()
 				{
-					return "<div class = \"cell " + this.words[this.number] + "\">" + this.number.toString() + "</div>";
+					if(this.type == "normal")
+					{
+						return "<div class = \"cell " + this.words[this.number] + " " + this.type + "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
+					}
+					
+					else
+					{
+						return "<div class = \"cell " + this.words[this.number] + " " + this.type + "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
+					}
+				}
+				
+				this.getPosition = function()
+				{
+					return [this.x, this.y];
+				}
+				
+				this.setPosition = function(someX, someY)
+				{
+					this.x = someX;
+					this.y = someY;
+				}
+				
+				this.toggleFading = function()
+				{
+					this.fading = !this.fading;
+				}
+				
+				this.getType = function()
+				{
+					return this.type;
+				}
+				
+				this.setType = function(t)
+				{
+					this.type = t;
 				}
 			}
 			
 			var b = new Board(SIZE, "board");
-			
-			function doThese()
+			var t = new Board([7, 1], "tray");
+
+			function setCurrentPosition(x, y)
 			{
-				b.populate();
-				b.render("boardArea");
-			}
-			
-			function doThat()
-			{
-				b.gravitate();
-				b.render("boardArea");
-			}
-			
-			function getCellNumber2(x, y, board)
-			{
-				alert(board.getCellNumber(x, y));
-			}
-			
-			function testClumps(x, y)
-			{	
-				b.clumps(x, y);
+				hx = x;
+				hy = y;
 			}
 
+			var counter = 0;
+			var started = false;
+			
+			function mainLoop()
+			{
+				if(!started)
+				{
+					b.populate();
+					t.tPopulate();
+					started = true;
+				}
+				counter += 1
+				b.render("boardArea");
+				t.tUpdate();
+				t.render("trayArea");
+				
+				if(counter % 25 == 0)
+				{
+					b.gravitate();
+					setTimeout(function(){b.breaks()},1000);
+				}
+
+			}
+			
+			var m = setInterval(function(){mainLoop()}, 50);
+			
+			function stop()
+			{
+				clearInterval(m);
+			}
+			
 		</script>
 		
 		<style type = "text/css">
@@ -297,6 +474,7 @@
 				font-size: 20px;
 				font-weight: bold;
 				font-family: Cursive;
+				user-select: none;
 			}
 			
 			.zero
@@ -339,10 +517,18 @@
 				background-color: blue;
 			}
 			
+			.rock
+			{	
+				color: lightgray;
+				background-color: lightgray;
+				text-shadow: none;
+			}
+			
 			table
 			{
 				border: 1px solid lightgray;
 				border-spacing: 0;
+				margin: 0 auto;
 			}
 			
 			td
@@ -363,13 +549,10 @@
 		</style>
 	</head>
 	
-	<body>
-		<input type = "button" value = "these" onclick = "doThese()" />
-		<input type = "button" value = "that" onclick = "doThat()" />
-		<input type = "textarea" value = "x" id = "xIn" />
-		<input type = "textarea" value = "y" id = "yIn" />
-		<input type = "button" value = "get" onclick = "testClumps(xIn.value, yIn.value)" />
-		
+	<body onmouseup = "t.tRelease(b)">
+		<input type = "button" value = "stop" onclick = "stop()" />
+		<div id = "trayArea"></div>
+		<br>
 		<div id = "boardArea"></div>
 	</body>
 </html>
