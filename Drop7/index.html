@@ -182,7 +182,7 @@
 					var out = "";
 					for(var i = 0; i < row.length; i++)
 					{
-						out += row[i].getNumber().toString() + " ";
+						out += row[i].getNumber().toString();
 					}
 					
 					return out;
@@ -190,24 +190,44 @@
 				
 				this.clumps = function(xIndex, yIndex)
 				{
-					var x = parseInt(xIndex);
-					var cellRow = this.cells[yIndex];
-					var row = [];
+					var x = xIndex;
+					var row = this.cells[yIndex];
+					var indices = new Array();
+					var minBelow = row.length;
+					var minAbove = row.length;
+					var c = new Cell(0);
+					row = [c].push(row).push(c);
 					
-					for(var i = 0; i < cellRow.length; i++)
-					{	
-						row.push(cellRow[i].getNumber());
+					for(var i = 0; i < row.length; i++)
+					{
+						if(row[i].getNumber() == 0)
+						{
+							indices.push(i);
+						}
 					}
 					
-					var left = row.slice(0, x);
-					var right = row.slice(x+1);
-					var rightIndex = right.indexOf(0);
-					var leftIndex = x - left.reverse().indexOf(0);
+					for(var j = 0; j < indices.length; j++)
+					{
+						var current = indices[j];
+						
+						if(current > x)
+						{
+							if(current - x < minAbove)
+							{
+								minAbove = current - x;
+							}
+						}
+						
+						if(current < x)
+						{
+							if(x - current < minBelow)
+							{
+								minBelow = x - current;
+							}
+						}
+					}
 					
-					alert(rightIndex - leftIndex);
-					alert(leftIndex);
-					alert(rightIndex);
-					
+					alert(minAbove + minBelow - 1);
 					
 				}
 			}
