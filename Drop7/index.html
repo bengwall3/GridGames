@@ -458,8 +458,6 @@
 					
 					output += "</div>";
 					
-					alert(output);
-					
 					return output;
 				}
 				
@@ -534,7 +532,7 @@
 				vertical-align: middle;
 				border: 1px solid black;
 				color: white;
-				text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+				text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
 				font-size: 20px;
 				font-weight: bold;
 				font-family: Cursive;
@@ -543,8 +541,7 @@
 			
 			.zero
 			{
-				color: black;
-				background-color: black;
+				opacity: 0;
 			}
 			.one
 			{
@@ -586,31 +583,43 @@
 				color: lightgray;
 				background-color: lightgray;
 				text-shadow: none;
-				border: -2px solid dimgray;
-				border-radius: 50%;
 			}
 			
-			table
+			#board
 			{
 				border: 1px solid lightgray;
 				border-spacing: 0;
 				margin: 0 auto;
 			}
 			
-			td
+			#tray
+			{
+				margin: 0 auto;
+				border-spacing: 0;
+			}
+			
+			#board td
 			{
 				border: 1px solid lightgray;
 				padding: 0;
+				background-color: black;
 			}
 			
-			tr
+			#board tr
 			{
 				padding: 0;
+			}
+			
+			#tray td
+			{
+				padding: 0;
+				border: 1px solid gray;
 			}
 			
 			body
 			{
 				background-color: black;
+				transform: scale(1.75);
 			}
 			
 			.dot
@@ -626,7 +635,7 @@
 			
 			.gray
 			{
-				background-color: gray;
+				background-color: dimgray;
 			}
 			
 			#roundCounter
@@ -637,15 +646,53 @@
 				margin: 0 auto;
 				position: relative;
 			}
+			
+			#trayArea
+			{
+				margin-bottom: 2px;
+			}
+			
+			#boardArea
+			{
+				margin-bottom: 10px;
+			}
+			
+			#container
+			{
+				margin: 0 auto;
+				width: 332px;
+				height: 332px;
+				border: 4px dotted black;
+				background-color: gray;
+				padding-top: 20px;
+				border-radius: 10%;
+			}
+			
+			#levelArea
+			{
+				margin: 0 auto;
+				text-align: center;
+				width: 332px;
+				height: 25px;
+				position: absolute;
+				color: white;
+				text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+				font-family: Cursive;
+				font-weight: bold;
+				font-size: 20px;
+			}
+			
+			
 		</style>
 	</head>
 	
 	<body onmouseup = "t.tRelease(b, r)">
-		<input type = "button" value = "stop" onclick = "stop()" />
-		<div id = "trayArea"></div>
-		<br>
-		<div id = "boardArea"></div>
-		<br>
-		<div id = "roundArea"></div>
+		<div id = "container">
+			<div id = "trayArea"></div>
+			<div id = "boardArea"></div>
+			<div id = "roundArea"></div>
+			<div id = "levelArea">Level 1</div>
+		</div>
+		<input type = "button" value = "stop" onclick = "stop()"/>
 	</body>
 </html>
