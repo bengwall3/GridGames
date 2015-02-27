@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<script type = "text/javascript">
-			var SIZE = [64,64];
+			var SIZE = [100,100];
 			
 			var hx = 0; //currently hovered cell
 			var hy = 0;
@@ -16,7 +16,9 @@
 			
 			function randBool()
 			{
-				return (1 != randint(0, 2));
+				var b = (1 >= randint(0, 3));
+				
+				return b;
 			}
 			
 			function Board(size, id)
@@ -24,6 +26,9 @@
 				this.cells = new Array();
 				this.size = size;
 				this.id = id;
+				this.generation = 0;
+				this.numOn = 0;
+				this.string = "";
 				
 				this.populate = function()
 				{
@@ -34,6 +39,9 @@
 							for(var j = 0; j < this.size[0]; j++) //x dimension
 							{
 								c = new Cell(j, i, randBool());
+								//c = new Cell(j, i, false);
+								//alert(c.getState());
+								
 								temp.push(c);
 							}
 							
@@ -89,6 +97,9 @@
 				
 				this.update = function()
 				{
+					var updates = new Array();
+					this.numOn = 0;
+					
 					for(var y = 0; y < this.size[1]; y++)
 					{
 						for(var x = 0; x < this.size[0]; x++)
@@ -97,21 +108,36 @@
 			
 							if(this.getCell(x, y).getState())
 							{
-								if(n < 2 || n > 3)
+								this.numOn++;
+								
+								if(n < 2)
 								{
-									this.toggleCell(x, y);
+									updates.push([x,y]);
+								}
+								
+								else if(n > 3)
+								{
+									updates.push([x,y]);
 								}
 							}
 							
-							else
+							else if(!this.getCell(x, y).getState())
 							{
 								if(n == 3)
 								{
-									this.toggleCell(x, y);
+									updates.push([x,y]);
 								}
 							}
 						}
 					}
+					
+					for(var i = 0; i < updates.length; i++)
+					{
+						this.getCell(updates[i][0], updates[i][1]).toggleState();
+					}
+					
+					this.generation++;
+					this.string += this.generation + " " + this.numOn + "<br>";
 				}
 				
 				this.getLivingNeighbors = function(x, y)
@@ -124,6 +150,22 @@
 						{
 							n++;
 						}
+						
+						if(y + 1 < this.size[1])
+						{
+							if(this.getCell(x + 1, y + 1).getState())
+							{
+								n++;
+							}
+						}
+						
+						if(y - 1 >= 0)
+						{
+							if(this.getCell(x + 1, y - 1).getState())
+							{
+								n++;
+							}
+						}
 					}
 					
 					if(x - 1 >= 0)
@@ -131,6 +173,22 @@
 						if(this.getCell(x - 1, y).getState())
 						{
 							n++;
+						}
+						
+						if(y + 1 < this.size[1])
+						{
+							if(this.getCell(x - 1, y + 1).getState())
+							{
+								n++;
+							}
+						}
+						
+						if(y - 1 >= 0)
+						{
+							if(this.getCell(x - 1, y - 1).getState())
+							{
+								n++;
+							}
 						}
 					}
 					
@@ -151,6 +209,35 @@
 					}
 
 					return n;
+				}
+				
+				this.getGeneration = function()
+				{
+					return this.generation;
+				}
+				
+				this.clear = function()
+				{
+					for(var y = 0; y < this.size[1]; y++)
+					{
+						for(var x = 0; x < this.size[0]; x++)
+						{
+							if(this.getCell(x,y).getState())
+							{
+								this.getCell(x, y).toggleState();
+							}
+						}
+					}
+				}
+				
+				this.getOn = function()
+				{
+					return this.numOn;
+				}
+				
+				this.getString = function()
+				{
+					return this.string;
 				}
 			}
 			
@@ -196,7 +283,7 @@
 				
 				this.getState = function()
 				{
-					return self.state;
+					return this.state;
 				}
 				
 				this.toggleState = function()
@@ -210,13 +297,9 @@
 				}
 			}
 			
-			function setClickPosition(x, y)
-			{
-				cx = x;
-				cy = y;
-			}
-			
 			var started = false;
+			var updating = false;
+			
 			var b = new Board(SIZE, "board");
 			
 			function mainLoop()
@@ -234,15 +317,26 @@
 					cy = "null";
 				}
 				
-				//b.update();
+				if(updating)
+				{
+					b.update();
+				}
+				
+				out.value = b.getGeneration();
+				out2.value = b.getOn();
 				b.render("boardArea");
 			}
 			
-			var m = setInterval(function(){mainLoop()}, 1000);
+			var m = setInterval(function(){mainLoop()}, 125);
 			
 			function stop()
 			{
 				clearInterval(m);
+			}
+			
+			function start()
+			{
+				m = setInterval(function(){mainLoop()}, 125);
 			}
 			
 			function setHoverPosition(x, y)
@@ -250,13 +344,41 @@
 				hx = x;
 				hy = y;
 			}
+			
+						
+			function setClickPosition(x, y)
+			{
+				cx = x;
+				cy = y;	
+			}
+			
+			function toggleUpdate()
+			{
+				updating = !updating;
+			}
+			
+			
+			function step()
+			{
+				b.update();
+			}
+			
+			function clearThis()
+			{
+				b.clear();
+			}
+			
+			function getData()
+			{
+				out3.innerHTML = b.getString();
+			}
 		</script>
 		
 		<style type = "text/css">
 			.cell
 			{
-				height: 8px;
-				width: 8px;
+				height: 6px;
+				width: 6px;
 			}
 			
 			.on
@@ -274,6 +396,7 @@
 				border-spacing: 0;
 				margin: 0 auto;
 				border: 8px solid dimgray;
+				box-shadow: 0 0 32px black;
 			}
 			
 			#board td
@@ -285,13 +408,39 @@
 			{
 				background-color: gray;
 			}
+			
+			.input
+			{
+				border: 2px solid black;
+				border-radius: 5px;
+				text-align: center;
+				margin: 0 auto;
+			}
+			
+			#container
+			{
+				margin: 0 auto;
+			}
 		</style>
 	</head>
 	
 	<body>
 		<div id = "container">
 			<div id = "boardArea"></div>
-			<input type = "textarea" value = "" id = "t" style = "margin: 0 auto;" />
+			
+			<input type = "textarea" value = "" id = "out" style = "margin: 0 auto;" />
+			<input type = "textarea" value = "" id = "out2" style = "margin: 0 auto;" />
+			
+			
+			<form style = "margin: 0 auto;">
+				<input class = "input" type = "button" value = "Stop" onclick = "stop()" />
+				<input class = "input" type = "button" value = "Start" onclick = "start()" />
+				<input class = "input" type = "button" value = "Toggle Update" onclick = "toggleUpdate()" />
+				<input class = "input" type = "button" value = "Clear Board" onclick = "clearThis()" />
+				<input class = "input" type = "button" value = "Get Data" onclick = "getData()" />
+			</form>
+			
+			<p id = "out3"></p>
 		</div>
 	</body>
 </html>
