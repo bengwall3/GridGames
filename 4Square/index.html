@@ -229,7 +229,7 @@
 					
 					for(var i = 0; i < this.size[1]; i++)
 					{
-						for(var j = 0; i < this.size[0]; j++)
+						for(var j = 0; j < this.size[0]; j++)
 						{
 							var c = this.getCell(j, i);
 							
@@ -314,6 +314,7 @@
 				this.x = x;
 				this.y = y;
 				this.type = type;
+				this.selected = false;
 				
 				this.setNumber = function(n)
 				{
@@ -358,8 +359,13 @@
 				
 				this.generateHTML = function()
 				{
-					return "<div class = \"cell p" + this.owner.toString() + " " + this.type + "\" onmouseover = \"setHoverPosition(" + x.toString() + ", " + y.toString() + ")\" onmouseup = \"setClickedPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
+					return "<div class = \"cell p" + this.owner.toString() + " " + this.type + " " + this.selected.toString() + "\" onmouseover = \"setHoverPosition(" + x.toString() + ", " + y.toString() + ")\" onmouseup = \"setClickedPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
 				}	
+				
+				this.toggleSelected = function()
+				{
+					this.selected = !this.selected;
+				}
 			}
 			
 			function Player(name)
@@ -411,17 +417,12 @@
 			{
 				hx = x;
 				hy = y;
-
-				v.value = b.getCellNumber(x, y);
 			}
 			
 			function setClickedPosition(x, y)
 			{
 				cx = x;
 				cy = y;
-				
-				xIn.value = x;
-				yIn.value = y;
 			}
 			
 			function makeNames()
@@ -464,7 +465,7 @@
 							var n = randint(MIN, MAX);
 							b.setCellNumber(cx, cy, n);
 							b.setCellOwner(cx, cy, current);
-							
+							b.getCell(cx, cy).toggleSelected();
 							lx = cx;
 							ly = cy;
 							
@@ -482,7 +483,7 @@
 					{
 						turnDone = !turnDone;
 						current = Math.max((current + 1) % (PLAYERS + 1), 1);
-						
+						b.getCell(lx, ly).toggleSelected();
 						if(b.boardFull())
 						{
 							state = "gameOver";
@@ -504,9 +505,10 @@
 								{
 									if(b.getCellNumber(cx, cy) < b.getCellNumber(lx, ly))
 									{
+										b.getCell(lx, ly).toggleSelected();
 										b.setCellNumber(cx, cy, b.getCellNumber(lx, ly));
 										b.setCellOwner(cx, cy, current);
-										
+										b.getCell(cx, cy).toggleSelected();
 										lx = cx;
 										ly = cy;
 									}
@@ -524,7 +526,7 @@
 					var out = "";
 					var max = 0;
 					var win = 0;
-					for(var i = 1; i < PLAYERS; i++)
+					for(var i = 1; i <= PLAYERS; i++)
 					{
 						var n = b.countPlayer(i);
 						
@@ -624,6 +626,11 @@
 				background-color: green;
 			}
 			
+			.true
+			{
+				border-radius: 25%;
+			}
+			
 			#board
 			{
 				border: 2px solid black;
@@ -664,17 +671,11 @@
 	
 	<body>
 		<input type = "button" value = "Stop" onclick = "stop()" />
-		<input type = "textarea" value = "" id = "xIn" />
-		<input type = "textarea" value = "" id = "yIn" />
-		<br><hr>
-		<input type = "textarea" value = "" id = "xIn2" />
-		<input type = "textarea" value = "" id = "yIn2" />
 		
 		<div id = "container">
 			<div id = "boardArea"></div>
 			<input type = "button" value = "End Turn" onclick = "endTurn()" style = "border: 2px solid black; color: black; font-weight: bold; background-color: lightgray; border-radius: 4px; text-align: center; margin-left: 137px;"/>
 		</div>
 		
-		<input type = "textarea" value = "" id = "v" style = "overflow: auto;" />
 	</body>
 </html>
