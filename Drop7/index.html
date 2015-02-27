@@ -458,13 +458,9 @@
 				this.y = y;
 				this.fading = false;
 				this.type = type;
+				this.hits = 0;
 				
-				if(this.type == "normal")
-				{
-					this.hits = 0;
-				}
-				
-				else if(this.type == "stone")
+				if(this.type == "stone")
 				{
 					this.hits = 2;
 				}
@@ -483,7 +479,7 @@
 				{
 					var output = "<div ";
 					
-					output += "class = \"cell " + this.words[this.number] + " " + this.type + " hits" + this.hits + " ";
+					output += "class = \"cell " + this.words[this.number] + " " + this.type + " ";
 					
 					if(this.type == "normal")
 					{
@@ -492,7 +488,15 @@
 					
 					else
 					{
-						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" ></div>";
+						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >";
+						alert(this.hits);
+						
+						if(this.hits == 2)
+						{
+						}
+						
+						output += "<div class = \"innerRock\"></div></div>";
+				
 					}
 					
 					return output;
@@ -712,24 +716,16 @@
 				background-color: lightgray;
 				text-shadow: none;
 				border-radius: 50%;
-				border: 4px solid dimgray;
-				height: 24px;
-				width: 24px;
-				margin-left: 1px;
-			}
-			.rock hits1
-			{	
-				color: lightgray;
-				background-color: lightgray;
-				text-shadow: none;
-				border-radius: 50%;
 			}
 			
-			.rock hits2
+			.innerRock
 			{
-				color: dimgray;
-				background-color: dimgray;
-				text-shadow: none;
+				height: 18px;
+				width: 18px;
+				border-radius: 50%;
+				border: 3px solid black;
+				margin: 0 auto;
+				margin-top: 4px;
 			}
 			
 			#board
