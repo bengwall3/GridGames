@@ -1,13 +1,16 @@
 <html>
 	<head>
 		<link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Oswald' rel='stylesheet' type='text/css'>
-		
+		<script type = "text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 		<script type = "text/javascript">
 		
 			var SIZE = [7, 7];
 			var MAX = 7;
 			var hx = 0; //currently hovered cell
 			var hy = 0;
+			var ANIMATING = false;
+			var FADETIME = 500;
+			var FPS = 30;
 			
 			function randint(a, b)
 			{
@@ -33,7 +36,7 @@
 						
 						for(var j = 0; j < this.size[0]; j++) //x dimension
 						{
-							c = new Cell(randint(0, MAX), j, i, "normal");
+							c = new Cell(randint(0, MAX), j, i, "normal", 0);
 							temp.push(c);
 						}
 						
@@ -255,9 +258,12 @@
 				
 				this.canDrop = function(x)
 				{
-					if(this.cells[0][x].getNumber() == 0)
+					if(!this.anyFalling())
 					{
-						return true;
+						if(this.cells[0][x].getNumber() == 0)
+						{
+							return true;
+						}
 					}
 					
 					return false;
@@ -281,6 +287,22 @@
 					
 					return false;
 				} 
+				
+				this.anyFading = function()
+				{
+					for(var y = 0; y < this.size[1] - 1; y++)
+					{
+						for(var x = 0; x < this.size[0]; x++)
+						{	
+							if(this.getCell(x, y).isFading())
+							{
+								return true;
+							}
+						}
+					}
+					
+					return false;
+				}
 				
 				this.breaks = function()
 				{	
@@ -313,56 +335,10 @@
 					{
 						if(this.getCell(bList[i][0], bList[i][1]).getType() == "normal")
 						{
-							this.deleteCell(bList[i][0], bList[i][1]);
+							this.getCell(bList[i][0], bList[i][1]).fade();
 						}
-						
-						/*var rocks = this.lookAroundForRock(bList[i][0], bList[i][1]);
-						
-						for(var j = 0; j < rocks.length; j++)
-						{
-							this.getCell(rocks[j][0], rocks[j][1]).takeHit();
-						} */
 					}
 				}
-				
-				/*this.lookAroundForRock = function(x, y)
-				{
-					var out = new Array();
-					
-					if(x + 1 < this.size[0])
-					{
-						if(this.cells[y][x + 1].getType() == "rock")
-						{
-							out.push([x + 1, y]);
-						}
-					}
-					
-					if(y + 1 < this.size[1])
-					{
-						if(this.cells[y + 1][x].getType() == "rock")
-						{
-							out.push([x, y + 1]);
-						}
-					}
-					
-					if(x - 1 >= 0)
-					{
-						if(this.cells[y][x - 1].getType() == "rock")
-						{
-							out.push([x - 1, y]);
-						}
-					}
-					
-					if(y - 1 >= 0)
-					{
-						if(this.cells[y - 1][x].getType() == "rock")
-						{
-							out.push([x, y - 1]);
-						}
-					}
-					
-					return out;
-				} */
 				
 				this.pushUp = function()
 				{	
@@ -379,7 +355,7 @@
 					
 					for(var x = 0; x < this.size[0]; x++)
 					{
-						var c = new Cell(randint(1, 7), this.size[1] - 1, x, "rock");
+						var c = new Cell(randint(1, 7), this.size[1] - 1, x, "rock", 2);
 						row.push(c);
 					}
 					
@@ -405,13 +381,13 @@
 				this.number = 0;
 				this.index = 0;
 				
-				this.tPopulate = function()
+				this.tPopulate = function(other)
 				{
 					var temp = new Array();
 					
 					for(var x = 0; x < this.size[0]; x++)
 					{
-						c = new Cell(0, x, 0, "normal");
+						c = new Cell(0, x, 0, "normal", 0);
 						temp.push(c);
 					}
 					
@@ -447,7 +423,7 @@
 			}
 			
 
-			function Cell(number, x, y, type)
+			function Cell(number, x, y, type, hits)
 			{
 				this.number = number;
 				this.words = ["zero", "one", "two",
@@ -457,14 +433,11 @@
 				this.x = x;
 				this.y = y;
 				this.fading = false;
+				this.count = FADETIME;
 				this.type = type;
-				this.hits = 0;
-				
-				if(this.type == "stone")
-				{
-					this.hits = 2;
-				}
+				this.hits = hits;
 
+				
 				this.setNumber = function(n)
 				{
 					this.number = n;
@@ -477,26 +450,44 @@
 				
 				this.generateHTML = function()
 				{
+				
+					//also sort of treated like an update function 'cuz it gets called once per tick
+					if(this.fading)
+					{
+						this.count -= 1000/FPS;
+						
+						if(this.count <= 0 )
+						{
+							this.fading = false;
+							this.setNumber(0);
+							ANIMATING = false;
+							this.count = FADETIME;
+						}
+					}
+					
 					var output = "<div ";
 					
-					output += "class = \"cell " + this.words[this.number] + " " + this.type + " ";
+					output += "class = \"cell " + this.words[this.number] + " " + this.type + "\"";
+					output += "id = \"x" + this.x.toString() + "y" + this.y.toString() + "\" ";
 					
 					if(this.type == "normal")
 					{
-						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
+						output += "onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >" + this.number.toString() + "</div>";
 					}
 					
 					else
 					{
-						output += "\" onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >";
-						alert(this.hits);
+						output += "onmouseover = \"setCurrentPosition(" + x.toString() + ", " + y.toString() + ")\" >";
 						
-						if(this.hits == 2)
+						if(this.hits == 1)
 						{
+							output += "<div class = \"innerRock2\"></div></div>";
 						}
 						
-						output += "<div class = \"innerRock\"></div></div>";
-				
+						else if(this.hits == 2)
+						{					
+							output += "<div class = \"innerRock\"></div></div>";
+						}
 					}
 					
 					return output;
@@ -541,6 +532,18 @@
 				this.getHits = function()
 				{	
 					return this.hits;
+				}
+				
+				this.fade = function()
+				{
+					this.fading = true;
+					ANIMATING = true;
+					$("#x" +this.x + "y" + this.y).animate({height: "0px", width: "0px", fontSize: "0px", margin: "8px"}, FADETIME);
+				}
+				
+				this.isFading = function()
+				{
+					return this.fading;
 				}
 			}
 			
@@ -607,14 +610,17 @@
 			{
 				hx = x;
 				hy = y;
+				
+				xIn.value = b.getCell(hx, hy).getHits();
 			}
 			
 			var b = new Board(SIZE, "board");
-			var t = new Board([7, 1], "tray");
+			var t = new Board([SIZE[0], 1], "tray");
 			var r = new RoundCounter(24, 4, 4, "roundCounter");
 
 			var counter = 0;
 			var started = false;
+			var fCounter = FADETIME;
 			
 			function mainLoop()
 			{	
@@ -624,20 +630,34 @@
 					t.tPopulate();
 					started = true;
 				}
-				counter += 1
-				b.render("boardArea");
-				t.tUpdate();
-				t.render("trayArea");
-				r.render("roundArea");
 				
-				if(counter % 15 == 0)
+				if(!ANIMATING)
 				{
-					b.gravitate();
-					setTimeout(function(){b.breaks()},1000);
+					counter += 1
+					b.render("boardArea");
+					t.tUpdate();
+					t.render("trayArea");
+					r.render("roundArea");
+					
+					if(counter % 15 == 0)
+					{
+						b.gravitate();
+						//setTimeout(function(){b.breaks()},1000);
+					}
+				}
+				
+				if(ANIMATING)
+				{
+					fCounter -= 1;
+					if(fCounter == 0)
+					{
+						fCounter = FADETIME;
+						ANIMATING = false;
+					}
 				}
 			}
 			
-			var m = setInterval(function(){mainLoop()}, 50);
+			var m = setInterval(function(){mainLoop()}, 1000/30);
 			
 			function stop()
 			{
@@ -648,20 +668,25 @@
 			{
 				b.pushUp();
 			}
+			
+			function breakThem()
+			{
+				b.breaks();
+			}
 		</script>
 		
 		<style type = "text/css">
 			.cell
 			{
-				height: 32px;
-				width: 32px;	
+				height: 40px;
+				width: 40px;	
 				border-radius: 50%;
 				text-align: center;
 				vertical-align: middle;
 				border: 1px solid black;
 				color: white;
 				text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-				font-size: 20px;
+				font-size: 25px;
 				font-weight: bold;
 				font-family: 'Oswald', sans-serif;
 				
@@ -720,17 +745,28 @@
 			
 			.innerRock
 			{
-				height: 18px;
-				width: 18px;
+				height: 23px;
+				width: 23px;
 				border-radius: 50%;
-				border: 3px solid black;
+				border: 4px solid black;
 				margin: 0 auto;
 				margin-top: 4px;
 			}
 			
+			.innerRock2
+			{
+				height: 23px;
+				width: 23px;
+				border-radius: 50%;
+				border: 4px solid black;
+				margin: 0 auto;
+				margin-top: 4px;
+				background-color: black;
+			}
+			
 			#board
 			{
-				border: 1px solid lightgray;
+				border: 4px solid lightgray;
 				border-spacing: 0;
 				margin: 0 auto;
 			}
@@ -761,19 +797,18 @@
 			#tray td
 			{
 				padding: 0;
-				border: 1px solid dimgray;
+				border: 1px solid gray;
 			}
 			
 			body
 			{
 				background-color: black;
-				border: 10px solid gray;
 			}
 			
 			.dot
 			{
-				height: 5px;
-				width: 5px;
+				height: 6px;
+				width: 6px;
 				border-radius: 50%;
 				background-color: white;
 				margin: 2px;
@@ -788,8 +823,8 @@
 			
 			#roundCounter
 			{
-				height: 10px;
-				width: 252px;
+				height: 12.5px;
+				width: 315px;
 				color: white;
 				margin: 0 auto;
 				position: relative;
@@ -797,22 +832,23 @@
 			
 			#trayArea
 			{
-				margin-bottom: 2px;
+				margin-bottom: 2.5px;
 			}
 			
 			#boardArea
 			{
-				margin-bottom: 10px;
+				margin-bottom: 12.5px;
 			}
 			
 			#container
 			{
-				margin: 25% auto;
-				width: 332px;
-				height: 332px;
-				border: 4px dotted black;
-				background-color: dimgray;
-				padding-top: 20px;
+				margin: 0 auto;
+				margin-top: 50px;
+				width: 415px;
+				height: 430px;
+				border: 5px dotted black;
+				background-color: gray;
+				padding-top: 25px;
 				border-radius: 10%;
 			}
 			
@@ -820,13 +856,14 @@
 			{
 				margin: 0 auto;
 				text-align: center;
-				width: 332px;
-				height: 25px;
+				width: 415px;
+				height: 31.25px;
 				position: absolute;
 				color: white;
 				font-family: 'Open Sans Condensed', sans-serif;
-				font-size: 20px;
+				font-size: 25px;
 			}
+			
 
 		</style>
 	</head>
@@ -836,12 +873,13 @@
 			<div id = "trayArea"></div>
 			<div id = "boardArea"></div>
 			<div id = "roundArea"></div>
-			<div id = "levelArea">45,324</div>
+			<div id = "levelArea">123,456,789</div>
 		</div>
 		<input type = "button" value = "stop" onclick = "stop()"/>
 		<input type = "button" value = "push" onclick = "push()"/>
 		<input type = "textarea" value = "" id = "xIn" />
 		<input type = "textarea" value = "" id = "yIn" />
 		<input type = "button" value = "count" onclick = "count()"/>
+		<input type = "button" value = "break" onclick = "breakThem()"/>
 	</body>
 </html>
